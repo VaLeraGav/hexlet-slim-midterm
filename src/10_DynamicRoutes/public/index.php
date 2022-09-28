@@ -1,6 +1,6 @@
 <?php
 
-namespace App\HTTPSession;
+namespace App\DynamicRoutes;
 
 require_once dirname(__DIR__) . "/../../vendor/autoload.php";
 

@@ -13,7 +13,7 @@ $app->get('/', function ($request, $response) {
 });
 
 
-// curl -XPOST 'localhost:8080/users?page=4&per=3'
+// curl -XPOST 'localhost:8080/users?page=4&per=3' - в консоли
 $app->post('/users', function ($request, $response) {
     $page = $request->getQueryParam('page', 1);
     $per = $request->getQueryParam('per', 10);

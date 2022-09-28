@@ -8,5 +8,5 @@ index:
 lesson:
 	php -S localhost:8080  src/$(file)/public/lesson.php
 
-start:
-	php -S localhost:8080 -t project project/public/index.php
+project:
+	php -S localhost:8080 $(file)/public/index.php
