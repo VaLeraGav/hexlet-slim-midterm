@@ -283,6 +283,142 @@ $entityManager->flush();
 
 ## 15. Модифицирующие формы
 
+Начнём с того, что за вывод формы и её обработку должны отвечать два разных обработчика (а значит это разные маршруты). Ниже пример маршрутов для создания нового пользователя:
+
+- GET /users/new — страница с формой, которую заполняет пользователь. Эта форма отправляет POST-запрос на адрес /users, указанный в атрибуте action.
+- POST /users — маршрут, обрабатывающий данные формы
+
+Я выбрал именно такие маршруты не случайно. Подобная схема именования рекомендуется и автоматически создаётся многими фреймворками, такими как Rails. Она хорошо ложится на REST-архитектуру, о которой мы ещё поговорим.
+
+```html
+<!-- templates/users/new.phtml -->
+<form action="/users" method="post">
+  <div>
+    <label>
+        Имя
+      <input type="text" name="user[name]">
+    </label>
+  </div>
+  <div>
+    <label>
+      Email
+      <input type="email" required name="user[email]">
+    </label>
+    </div>
+  <div>
+<!-- ... -->
+```
+Интересный момент в форме выше, то как задаются имена. Каждое имя определяется как ключ в массиве `user`. Такой способ определения имён не является обязательным, но он очень удобен для массовой обработки значений формы. Их изоляция в одном массиве позволяет избежать потенциальных пересечений с другими данными. В поисковых формах эта схема тоже удобна, если количество элементов больше одного.
+
+```php
+$repo = new App\UserRepository();
+
+$app->post('/users', function ($request, $response) use ($repo) {
+    $validator = new Validator();
+    $user = $request->getParsedBodyParam('user');
+    $errors = $validator->validate($user);
+    if (count($errors) === 0) {
+        $repo->save($user);
+        return $response->withRedirect('/users', 302);
+    }
+    $params = [
+        'user' => $user,
+        'errors' => $errors
+    ];
+    return $this->get('renderer')->render($response, "users/new.phtml", $params);
+});
+```
+Разберем программу по частям:
+1.  В нашем случае валидация реализуется классом с одним методом `validate()`, который проверяет данные формы и возвращает специальный массив `$errors`, в котором ключ — это название поля, а значение — текст ошибки, который нужно вывести в форме.
+```php
+$validator = new Validator();
+
+// function validate($user)
+// {
+//     $errors = [];
+//     if (empty($user['name'])) {
+//         $errors['name'] = "Can't be blank"
+//     }
+//     // ...
+//     return $errors;
+// }
+$errors = $validator->validate($user);
+```
+2. Если ошибок нет, то данные формы сохраняются, например, в базу данных.
+```php
+if (count($errors) === 0) {
+    $repo->save($user);
+    return $response->withRedirect('/users');
+}
+```
+3.  Если попробовать в этот момент нажать `f5`, то браузер выдаст предупреждение о том, что вы пытаетесь повторно отправить данные. Это сообщение предупреждает о том, что метод `POST` не идемпотентен, и повторная отправка формы может привести к повторному созданию пользователя. Отпарвка переменных в форму:
+```php
+$params = [
+    'user' => $user,
+    'errors' => $errors
+];
+return $this->get('renderer')->render($response, "users/new.phtml", $params);
+```
+Теперь давайте вернёмся к нашей форме и изменим её так, чтобы в неё подставлялись как возникающие ошибки, так и значения полей, введённые пользователем.
+```html
+<!-- templates/users/new.phtml -->
+<form action="/users" method="post">
+  <div>
+    <label>
+        Имя
+      <input type="text" name="user[name]" value="<?= htmlspecialchars($user['name']) ?>">
+    </label>
+    <?php if (isset($errors['name'])): ?>
+      <div><?= $errors['name'] ?></div>
+    <?php endif ?>
+  </div>
+  <div>
+    <label>
+        Email
+      <input type="email" required name="user[email]" value="<?= htmlspecialchars($user['email']) ?>">
+    </label>
+    <?php if (isset($errors['email'])): ?>
+      <div><?= $errors['email'] ?></div>
+    <?php endif ?>
+  </div>
+  <!-- ... -->
+  <div>
+    <label>
+        Подтверждение пароля
+      <input type="password" required name="user[passwordConfirmation]" value="<?= htmlspecialchars($user['passwordConfirmation']) ?>">
+    </label>
+  </div>
+  <div>
+    <label>
+      Город
+      <select name="user[city]">
+        <option value="">Select</option>
+        <option <?= $user['city'] === '3' ? 'selected' : '' ?> value="3">Москва</option>
+        <option <?= $user['city'] === '13' ? 'selected' : '' ?> value="13">Пенза</option>
+        <option <?= $user['city'] === '399' ? 'selected' : '' ?> value="399">Томск</option>
+      </select>
+    </label>
+    <?php if (isset($errors['city'])): ?>
+      <div><?= $errors['city'] ?></div>
+    <?php endif ?>
+  </div>
+  <input type="submit" value="Sign Up">
+</form>
+```
+В свою очередь такое изменение формы требует изменения обработчика /users/new. Во избежание ошибок необходимо передать в шаблон пустой массив $errors и массив $user, в котором необходимо задать значения по умолчанию для соответствующих полей формы. Таким образом в шаблоне не придётся выполнять проверку данных формы на существование.
+
+```php
+$app->get('/users/new', function ($request, $response) {
+    $params = [
+        'user' => ['name' => '', 'email' => '', 'password' => '', 'passwordConfirmation' => '', 'city' => ''],
+        'errors' => []
+    ];
+    return $this->get('renderer')->render($response, "users/new.phtml", $params);
+});
+```
+Для генерации форм используются специальные билдеры.
+
+
 ## 16. Именованные маршруты
 
 ## 17. Стандарт PSR7
