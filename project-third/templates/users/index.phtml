@@ -1,0 +1,78 @@
+<style>
+  .registration {
+    margin: 30px;
+  }
+
+  .registration>form {
+    margin: 16px 10px;
+  }
+
+  .conclusion {
+    margin-left: 10px;
+  }
+
+
+  table {
+    margin-top: 20px;
+    width: 700px;
+    text-align: right;
+
+  }
+
+  th {
+    background-color: #278393;
+  }
+
+  td {
+    border-right: 3px solid grey;
+    border-bottom: 3px solid grey;
+  }
+</style>
+
+<div class="registration">
+  <h2>Search User</h2>
+
+  <hr>
+
+  <form action="/users" method="get">
+    <input type="search" required name="term" value="<?= htmlspecialchars($term) ?>" />
+    <input type="submit" value="Search" />
+  </form>
+  <div class="conclusion">
+    <?php for ($i = 1; $i < 10; $i++) : ?>
+      <div>
+        <?php
+        if (!empty($users[$i])) {
+          echo "$i . " . htmlspecialchars($users[$i]);
+        }
+        ?>
+      </div>
+
+    <?php endfor; ?>
+    <h3> Всего: <?= count($users) ?> </h3>
+    <form action="users/new">
+      <button>Переход по ссылке</button>
+    </form>
+  </div>
+  <hr>
+
+  <table class='table'>
+    <tr>
+      <th>Имя</th>
+      <th>email</th>
+      <th>id</th>
+    </tr>
+
+    <?php foreach ($fileUsers as $user) : ?>
+      <tr>
+        <td> <?= $user['name'] ?> </td>
+        <td> <?= $user['email'] ?></td>
+        <td> <?= $user['id'] ?></td>
+      </tr>
+    <?php endforeach; ?>
+    
+  </table>
+
+
+
+</div>

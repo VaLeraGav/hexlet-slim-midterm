@@ -46,4 +46,26 @@ $app->get('/users/{id}', function ($request, $response, $args) {
     return $this->get('renderer')->render($response, 'users/show.phtml', $params);
 });
 
+// $app->get('/users', function ($request, $response) use ($users) {
+//     $term = $request->getQueryParam('name');
+
+//     $fileUsers = json_decode(file_get_contents('data.json'), true);
+//     if (!empty($fileUsers)) {
+//         foreach ($fileUsers as ['name' => $name]) {
+//             $users[] = $name;
+//         }
+//     }
+//     if ($term) {
+//         $users = array_filter($users, fn ($user) => strpos($user, $term) !== false);
+//     }
+//     $params = [
+//         'users' => $users,
+//         'fileUsers' => $fileUsers,
+//         'term' => $term
+//     ];
+//     return $this->get('renderer')->render($response, 'users/index.phtml', $params);
+// });
+
+
+
 $app->run();
