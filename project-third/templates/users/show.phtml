@@ -1,1 +1,17 @@
-<h1>Hello, <?= htmlspecialchars($nickname) ?>! Your id is: <?= htmlspecialchars($id) ?> </h1>
+<style>
+    .registration {
+        margin: 30px;
+    }
+
+    .registration>form>div {
+        margin: 16px 10px;
+    }
+</style>
+<div class="registration">
+    <h2>Greeting</h2>
+
+    <hr>
+
+    <h4>Hello, <?= htmlspecialchars($nickname) ?> !</h4>
+    <h4> Your id is: <?= htmlspecialchars($id) ?></h4>
+</div>
